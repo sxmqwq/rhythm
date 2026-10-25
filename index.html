@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fa">
+  <meta name="description" content="从网易云读取一首熟悉的歌，完整歌词或拼音首字母接龙，也能提示一句接一句。">
+  <meta property="og:title" content="rhythm · 下一句，交给你">
+  <meta property="og:description" content="网易云歌词接龙。搜一首熟悉的歌，一句一句接下去。">
+  <title>rhythm · 歌词接龙</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="rhythm 首页"><span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>rhythm<span class="brand-dot">.</span></a>
+      <nav aria-label="主要导航">
+        <button class="nav-link active" type="button" data-nav="home">开始接龙</button>
+        <button class="nav-link" type="button" data-nav="library">我的曲库<span id="nav-count">0</span></button>
+      </nav>
+      <button class="rules-button" id="rules-button" type="button" aria-label="玩法说明"><span aria-hidden="true">?</span><span class="rules-label">玩法说明</span></button>
+    </div>
+  </header>
+  <main id="main" tabindex="-1"></main>
+  <footer class="site-footer">
+    <a href="/">sxmqwq's Blog <span aria-hidden="true">↗</span></a>
+    <p>歌词来自网易云音乐 · 读取服务 <a href="https://music.gdstudio.xyz/" target="_blank" rel="noopener noreferrer">GD音乐台</a> / <a href="https://api.injahow.cn/meting/" target="_blank" rel="noopener noreferrer">injahow</a></p>
+    <span>把熟悉的旋律，接成完整的回忆。</span>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="rules-dialog" aria-labelledby="rules-title">
+    <div class="dialog-top"><span class="eyebrow">HOW TO PLAY</span><button type="button" class="icon-button" id="close-rules" aria-label="关闭玩法说明">×</button></div>
+    <h2 id="rules-title">一句一句，接下去。</h2>
+    <ol class="rules-list">
+      <li><strong>找到熟悉的歌</strong><p>搜索歌名或歌手，也可以粘贴网易云歌曲、公开歌单的完整链接。</p></li>
+      <li><strong>完整歌词，或拼音首字母</strong><p>标准模式填写下一整句歌词。简易模式中，每个汉字输入一个拼音首字母，例如“我爱你”填 wan；英文、数字及其他文字保留原文。两种模式都忽略标点、空格、全半角和英文大小写，少字、多字均不通过。</p></li>
+      <li><strong>连续接龙，或提示一句接一句</strong><p>连续接龙只给首句，再由你逐句接完。提示模式由网页给第 1 句、你接第 2 句，再由网页给第 3 句、你接第 4 句；提示句不计接对或跳过。两种答题方式都可以搭配提示模式。</p></li>
+      <li><strong>只接演唱正文</strong><p>自动清理歌手、作词作曲等署名，以及对唱中的歌手前缀。分句以网易云原文为准。切换模式会从头开始，连击纪录按模式分别保存。</p></li>
+      <li><strong>卡住了，也可以慢慢想</strong><p>答错可以重试，连击清零。查看答案后可跳过这一句，跳过不计接对。曲库与接龙进度保存在当前浏览器。</p></li>
+    </ol>
+    <button class="button primary full-width" id="understood" type="button">知道了，开始接龙 <span aria-hidden="true">→</span></button>
+  </dialog>
+  <noscript><p class="noscript">请启用 JavaScript，才能读取歌词和进行接龙。</p></noscript>
+</body>
+</html>
