@@ -35,7 +35,7 @@ export function loadState(storage) {
       }
     }
     initial.activeId = initial.sessions[value.activeId]?.phase === 'playing' ? value.activeId : null;
-    return { state: initial, warning: '', notice: cleaned ? `已清理 ${cleaned} 首缓存歌曲中的署名信息，受影响歌曲的进度已重置。` : '' };
+    return { state: initial, warning: '', notice: cleaned ? `已清理 ${cleaned} 首缓存歌曲中的署名或翻译，受影响歌曲的进度已重置。` : '' };
   } catch {
     return { state: initial, warning: '未能恢复之前的曲库。你仍可读取网易云歌曲开始接龙。' };
   }

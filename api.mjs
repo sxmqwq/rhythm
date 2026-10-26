@@ -78,15 +78,17 @@ export class NeteaseClient {
   async lyrics(song, { signal } = {}) {
     const providers = [
       async () => {
-        const body = await this.request(METING_BASE, { server: 'netease', type: 'lrc', id: song.id }, { signal, text: true });
-        if (!body.trim() || /^\s*[\[{]\s*(?:"|\{|\])/u.test(body) || /<(?:!doctype|html)/iu.test(body)) throw new Error('没有读到原文歌词。');
-        return { raw: body, provider: 'injahow' };
-      },
-      async () => {
         const data = await this.request(GD_BASE, { types: 'lyric', source: 'netease', id: song.lyricId || song.id }, { signal });
         if (typeof data?.lyric !== 'string' || !data.lyric.trim()) throw new Error('这首歌暂时没有可用的原文歌词。');
+        // Prefer a structured original track: Meting may have already merged translations into its LRC.
         // tlyric is a separate translation track and must never enter the chain.
         return { raw: data.lyric, provider: 'GD音乐台' };
+      },
+      async () => {
+        const body = await this.request(METING_BASE, { server: 'netease', type: 'lrc', id: song.id }, { signal, text: true });
+        if (!body.trim() || /^\s*[\[{]\s*(?:"|\{|\])/u.test(body) || /<(?:!doctype|html)/iu.test(body)) throw new Error('没有读到原文歌词。');
+        // Keep the provider tag so parsing and cached-data migration can undo TLYRIC formatting.
+        return { raw: body, provider: 'injahow' };
       },
     ];
     let failure;

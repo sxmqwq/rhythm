@@ -119,7 +119,7 @@ async function prepareSong(song, play = false) {
   if (view !== 'game') render();
   try {
     const { raw, provider } = await api.lyrics(song);
-    const { lines, revision, metadata } = parseLyrics(raw, song);
+    const { lines, revision, metadata } = parseLyrics(raw, { ...song, provider });
     if (state.library.length >= MAX_LIBRARY) throw new Error('曲库已满，请先移除一些歌曲再试。');
     const saved = { ...song, name: song.name || metadata.ti || `网易云歌曲 ${song.id}`, artist: song.artist || metadata.ar || '未知歌手', lines, revision, metadata, provider, importedAt: Date.now() };
     state.library.unshift(saved);

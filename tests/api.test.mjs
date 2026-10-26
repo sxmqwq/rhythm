@@ -14,16 +14,37 @@ test('search requests NetEase only and normalizes metadata without accepting for
   assert.equal(songs[0].name, '<script>测试</script>');
   assert.equal(songs[0].artist, '歌手甲 / 歌手乙');
 });
-test('lyric failover reads original text and never mixes in translation', async () => {
+test('lyric requests prefer a separate original track and never mix in translation', async () => {
   const calls = [];
   const client = new NeteaseClient({ fetchImpl: async url => {
     calls.push(url);
-    if (calls.length === 1) throw new TypeError('network');
+    assert.equal(new URL(url).searchParams.get('types'), 'lyric');
     return response({ lyric: '[00:01]original one\n[00:02]original two', tlyric: '[00:01]翻译一\n[00:02]翻译二' });
   } });
   const result = await client.lyrics({ id: '1' });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 1);
+  assert.equal(result.provider, 'GD音乐台');
   assert.ok(result.raw.includes('original one'));
+  assert.ok(!result.raw.includes('翻译'));
+});
+test('an original-track outage falls back to Meting with its provider identity retained', async () => {
+  const calls = [];
+  const client = new NeteaseClient({ fetchImpl: async url => {
+    calls.push(url);
+    if (new URL(url).searchParams.has('types')) throw new TypeError('network');
+    return response('[00:01]original one (翻译一)\n[00:02]original two (翻译二)');
+  } });
+  const result = await client.lyrics({ id: '1' });
+  assert.equal(calls.length, 2);
+  assert.equal(result.provider, 'injahow');
+  assert.ok(result.raw.includes('original one'));
+});
+test('a translation-only response cannot replace the original lyric track', async () => {
+  const client = new NeteaseClient({ fetchImpl: async url => new URL(url).searchParams.has('types')
+    ? response({ lyric: '', tlyric: '[00:01]翻译一\n[00:02]翻译二' })
+    : response('[00:01]original one\n[00:02]original two') });
+  const result = await client.lyrics({ id: '1' });
+  assert.equal(result.provider, 'injahow');
   assert.ok(!result.raw.includes('翻译'));
 });
 test('playlist song IDs must come from the expected NetEase adapter URL', async () => {

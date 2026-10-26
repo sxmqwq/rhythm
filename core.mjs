@@ -41,12 +41,37 @@ function artistNames(artist) {
   return String(artist || '').split(/\s*[/／、,，;&＆；]\s*/u).map(value => value.trim()).filter(Boolean);
 }
 
-// Keep music text intact: only known names and explicit credit fields are removed.
-export function cleanLyricLines(input, { name = '', artist = '', metadata = {} } = {}) {
+// Meting's TLYRIC formatter appends Chinese translations as `original (translation)`.
+// This rule is only used for that provider; canonical original tracks keep their parentheses.
+export function stripMetingTranslation(value) {
+  const text = String(value ?? '').trim();
+  const pairs = new Map([[')', '('], ['）', '（']]);
+  if (!pairs.has(text.at(-1))) return text;
+  const stack = [];
+  let start = -1;
+  for (let index = text.length - 1; index >= 0; index--) {
+    const char = text[index];
+    if (pairs.has(char)) stack.push(pairs.get(char));
+    else if (char === '(' || char === '（') {
+      if (stack.pop() !== char) return text;
+      if (!stack.length) { start = index; break; }
+    }
+  }
+  if (start <= 0) return text;
+  const original = text.slice(0, start).trimEnd();
+  const translation = text.slice(start + 1, -1);
+  // Do not guess at Chinese or mixed-language sung passages, or remove English ad-libs.
+  if (/\p{Script=Han}/u.test(original) || !/[\p{Script=Latin}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(original) || !/\p{Script=Han}/u.test(translation)) return text;
+  return original;
+}
+
+// Keep music text intact: only known names, explicit credits and provider-added translations are removed.
+export function cleanLyricLines(input, { name = '', artist = '', metadata = {}, provider = '' } = {}) {
   const names = [...new Set([...artistNames(artist), ...artistNames(metadata.ar)])];
   const titles = [...new Set([name, metadata.ti].map(normalizeAnswer).filter(Boolean))];
   const identities = new Set(names.map(normalizeAnswer).filter(Boolean));
   const headings = new Set(names.flatMap(value => titles.flatMap(title => [title + normalizeAnswer(value), normalizeAnswer(value) + title])));
+  const seen = new Set();
   return input.flatMap(line => {
     let text = line.text.trim();
     if (credit.test(text) || extraCredit.test(text) || rights.test(text) || section.test(text)) return [];
@@ -57,7 +82,13 @@ export function cleanLyricLines(input, { name = '', artist = '', metadata = {} }
     // Duet lines sometimes begin with a performer's name. Remove the label, not the sung words.
     const label = text.match(/^(?:[\[【(（]([^\]】)）]+)[\]】)）]\s*[:：]?|([^:：]{1,100})[:：])\s*/u);
     if (label && identities.has(normalizeAnswer(label[1] || label[2]))) text = text.slice(label[0].length).trim();
+    if (provider === 'injahow') text = stripMetingTranslation(text);
     if (!normalizeAnswer(text)) return [];
+    if (Number.isFinite(line.time)) {
+      const key = `${line.time}\u0000${text}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+    }
     return [{ ...line, text }];
   });
 }
